@@ -2,10 +2,11 @@ import React from "react";
 import {
   SET_POSTS,
   SET_USERS,
-  SET_SELECTED_USER,
-  SET_SELECTED_POST,
+  SET_SELECTED_USERS,
+  SET_SELECTED_POSTS,
 } from "./actions";
 import { connect } from "react-redux";
+import Select from "react-select";
 
 class App extends React.Component {
   constructor(props) {
@@ -35,12 +36,11 @@ class App extends React.Component {
   }
 
   async fetchPostsByUser(userId) {
-    const { SET_POSTS } = this.props;
     const postsResp = await fetch(
       `https://jsonplaceholder.typicode.com/posts?userId=${userId}`
     );
     const posts = await postsResp.json();
-    SET_POSTS(posts);
+    return posts;
   }
 
   // componentDidMount is called when the component mounts and we fetch the relevant data
@@ -52,57 +52,77 @@ class App extends React.Component {
 
   // componentDidUpdate is called when the component updates, in this case when the redux state is updated
   async componentDidUpdate(prevProps) {
-    // when the selected user changes in state we compare it with the previous selected user
-    if (this.props.selectedUser !== prevProps.selectedUser) {
-      const { selectedUser } = this.props;
-      // if the user select's the first option "Select User" we reset the posts
+    // when the selected users changes in state we compare it with the previous selected users
+    if (
+      JSON.stringify(this.props.selectedUsers) !==
+      JSON.stringify(prevProps.selectedUsers)
+    ) {
+      const { selectedUsers } = this.props;
+      // if the user reset's user dropdown we reset the posts
       // + is used to convert the string to a number
-      if (+selectedUser === 0) {
+      if (!selectedUsers.length) {
         await this.fetchPosts();
-        this.props.SET_SELECTED_POST("");
+        this.props.SET_SELECTED_POSTS([]);
         return;
       }
       // else we filter the posts based on the selected user and set the posts for that selected user
-      this.fetchPostsByUser(+selectedUser);
+      // since the selected users are going to be in the form of an array, we loop the array and then fetch the posts for each of the users
+      const promises = selectedUsers.map(async (selectedUser) => {
+        return await this.fetchPostsByUser(+selectedUser.value);
+      });
+      // then store the result to the state
+      const res = (await Promise.all(promises)).flatMap((res) => res);
+      this.props.SET_POSTS(res);
     }
 
-    // when the selected post changes in state we compare it with the previous selected post
-    if (this.props.selectedPost !== prevProps.selectedPost) {
-      const { selectedPost } = this.props;
-      // if the user select's the first option "Select Post" we reset the user
+    // when the selected posts changes in state we compare it with the previous selected posts
+    if (
+      JSON.stringify(this.props.selectedPosts) !==
+      JSON.stringify(prevProps.selectedPosts)
+    ) {
+      const { selectedPosts } = this.props;
+      // if the user reset's post dropdown we reset the users
       // + is used to convert the string to a number
-      if (+selectedPost === 0) {
-        this.props.SET_SELECTED_USER("");
+      if (!selectedPosts.length) {
+        this.props.SET_SELECTED_USERS([]);
         return;
       }
-      // else we filter the users based on the selected post and set the user for that selected post
-      const post = this.props.posts.filter(
-        (post) => post.id === +selectedPost
-      )[0];
-      // if the post exists we set the user
-      if (post) {
-        this.props.SET_SELECTED_USER(post.userId);
-      }
+      // now we find the posts that have been selected becuz the input returns us only a value and an id, so we use the id to get the posts from the state
+      const posts = this.props.selectedPosts.map((selectedPost) => {
+        return this.props.posts.find((post) => post.id === +selectedPost.value);
+      });
+      // after we get the selected posts we get their users
+      const users = posts.map((post) => {
+        const user = this.props.users.find((user) => user.id === post.userId);
+        return { value: user.id, label: user.name };
+      });
+      // then set the users in the dropdown
+      this.props.SET_SELECTED_USERS(users);
     }
   }
 
   // handleUserChange is called when the user selects a user
-  handleUserChange = (e) => {
-    const { SET_SELECTED_USER } = this.props;
-    SET_SELECTED_USER(e.target.value);
+  handleUserChange = (value) => {
+    const { SET_SELECTED_USERS } = this.props;
+    SET_SELECTED_USERS(value);
   };
 
   // handlePostChange is called when the user selects a post
-  handlePostChange = (e) => {
-    const { SET_SELECTED_POST } = this.props;
-    SET_SELECTED_POST(e.target.value);
+  handlePostChange = (value) => {
+    const { SET_SELECTED_POSTS } = this.props;
+    SET_SELECTED_POSTS(value);
   };
 
   render() {
-    // filtering the users based on the selected user
-    const user = this.props.users.filter(
-      (user) => user.id === +this.props.selectedUser
-    )[0];
+    // formatting the data so it can be rendered in the Select component, becuz it needs an array of specific format, i.e {value: "", label: ""}
+    const formattedUsers = this.props.users.map((user) => ({
+      value: user.id,
+      label: user.name,
+    }));
+    const formattedPosts = this.props.posts.map((post) => ({
+      value: post.id,
+      label: post.title,
+    }));
     if (this.state.loading) return <p>Loading...</p>;
     return (
       <div className="App">
@@ -117,31 +137,22 @@ class App extends React.Component {
           }}
         >
           <div>
-            {user && <p>selected User: {user.name}</p>}
-            <select
-              value={this.props.selectedUser}
+            <Select
+              placeholder={"Select Users"}
+              isMulti
+              options={formattedUsers}
               onChange={this.handleUserChange.bind(this)}
-            >
-              <option value={0}>Select User</option>
-              {this.props.users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
-              ))}
-            </select>
+              value={this.props.selectedUsers}
+            />
           </div>
           <div>
-            <select
-              value={this.props.selectedPost}
+            <Select
+              placeholder={"Select Posts"}
+              isMulti
+              options={formattedPosts}
               onChange={this.handlePostChange.bind(this)}
-            >
-              <option value={0}>Select Post</option>
-              {this.props.posts.map((post) => (
-                <option key={post.id} value={post.id}>
-                  {post.title}
-                </option>
-              ))}
-            </select>
+              value={this.props.selectedPosts}
+            />
             <p>Total posts: {this.props.posts.length}</p>
           </div>
         </div>
@@ -155,8 +166,8 @@ const mapStateToProps = (state) => {
   return {
     users: state.users.users,
     posts: state.posts.posts,
-    selectedUser: state.users.selectedUser,
-    selectedPost: state.posts.selectedPost,
+    selectedUsers: state.users.selectedUsers,
+    selectedPosts: state.posts.selectedPosts,
   };
 };
 
@@ -164,8 +175,8 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = {
   SET_USERS,
   SET_POSTS,
-  SET_SELECTED_USER,
-  SET_SELECTED_POST,
+  SET_SELECTED_USERS,
+  SET_SELECTED_POSTS,
 };
 
 // connecting the component to the redux store
