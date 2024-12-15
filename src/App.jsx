@@ -109,14 +109,14 @@ class App extends React.Component {
       // transform the remaining users into the dropdown format
       const newUsers = filteredUsers.map((user) => {
         return {
-          value: user.id, // Use `user.id` as the value
-          label: user.name, // Use `user.name` as the label
+          value: user.id,
+          label: user.name,
         };
       });
 
       // update the state only if there are new users to add
       if (newUsers.length > 0) {
-        // merge the existing `selectedUsers` with the new users and update the state
+        // merge the existing selectedUsers with the new users and update the state
         this.props.SET_SELECTED_USERS([
           ...this.props.selectedUsers, // keep the existing selected users
           ...newUsers, // add the new users
