@@ -137,6 +137,13 @@ class App extends React.Component {
           }}
         >
           <div>
+            <p>
+              Selected Users:{" "}
+              {this.props.selectedUsers.length > 0
+                ? this.props.selectedUsers.map((user) => user.label).join(",")
+                : "None"}
+            </p>
+
             <Select
               placeholder={"Select Users"}
               isMulti
