@@ -30,6 +30,16 @@ class App extends React.Component {
   async componentDidUpdate(prevProps) {
     if (this.props.selectedUser !== prevProps.selectedUser) {
       const { selectedUser } = this.props;
+      console.log(selectedUser, "selected User");
+      if (+selectedUser === 0) {
+        const postsResp = await fetch(
+          "https://jsonplaceholder.typicode.com/posts"
+        );
+        const posts = await postsResp.json();
+        this.props.SET_POSTS(posts);
+        this.props.SET_SELECTED_POST("");
+        return;
+      }
       // filter the current posts
       const postsResp = await fetch(
         `https://jsonplaceholder.typicode.com/posts?userId=${+selectedUser}`
@@ -83,7 +93,7 @@ class App extends React.Component {
               value={this.props.selectedUser}
               onChange={this.handleUserChange.bind(this)}
             >
-              <option>Select User</option>
+              <option value={0}>Select User</option>
               {this.props.users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.name}
