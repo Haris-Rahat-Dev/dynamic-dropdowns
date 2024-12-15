@@ -92,12 +92,36 @@ class App extends React.Component {
         return this.props.posts.find((post) => post.id === +selectedPost.value);
       });
       // after we get the selected posts we get their users
-      const users = posts.map((post) => {
-        const user = this.props.users.find((user) => user.id === post.userId);
-        return { value: user.id, label: user.name };
+      const usersFromPosts = posts.map((post) => {
+        return this.props.users.find((user) => user.id === post.userId);
       });
-      // then set the users in the dropdown
-      this.props.SET_SELECTED_USERS(users);
+      // filter out invalid users and already selected users
+      const filteredUsers = usersFromPosts.filter((user) => {
+        // Ensure the user exists (not null or undefined)
+        if (!user) return false;
+        // check if the user is already in `selectedUsers`
+        const isAlreadySelected = this.props.selectedUsers.some(
+          (selectedUser) => selectedUser.value === user.id
+        );
+        // include the user only if they are not already selected
+        return !isAlreadySelected;
+      });
+      // transform the remaining users into the dropdown format
+      const newUsers = filteredUsers.map((user) => {
+        return {
+          value: user.id, // Use `user.id` as the value
+          label: user.name, // Use `user.name` as the label
+        };
+      });
+
+      // update the state only if there are new users to add
+      if (newUsers.length > 0) {
+        // merge the existing `selectedUsers` with the new users and update the state
+        this.props.SET_SELECTED_USERS([
+          ...this.props.selectedUsers, // keep the existing selected users
+          ...newUsers, // add the new users
+        ]);
+      }
     }
   }
 
