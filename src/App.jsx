@@ -6,7 +6,6 @@ import {
   SET_SELECTED_POST,
 } from "./actions";
 import { connect } from "react-redux";
-import PropTypes from "prop-types";
 
 class App extends React.Component {
   constructor(props) {
@@ -167,25 +166,6 @@ const mapDispatchToProps = {
   SET_POSTS,
   SET_SELECTED_USER,
   SET_SELECTED_POST,
-};
-
-// defining the prop types, otherwise the linter will throw an error saying invalid prop types, because we are modifying the props from the outside
-App.propTypes = {
-  users: PropTypes.array.isRequired,
-  posts: PropTypes.array.isRequired,
-  selectedUser: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  selectedPost: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  SET_USERS: PropTypes.func.isRequired,
-  SET_POSTS: PropTypes.func.isRequired,
-  SET_SELECTED_USER: PropTypes.func.isRequired,
-  SET_SELECTED_POST: PropTypes.func.isRequired,
-};
-
-App.defaultProps = {
-  users: [],
-  posts: [],
-  selectedUser: "",
-  selectedPost: "",
 };
 
 // connecting the component to the redux store
