@@ -7,6 +7,7 @@ import { store } from "./store.js";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
+    {/* wrapping the app with the provider */}
     <Provider store={store}>
       <App />
     </Provider>
